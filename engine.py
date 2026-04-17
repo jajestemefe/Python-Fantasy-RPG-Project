@@ -3,11 +3,21 @@ import time
 import os
 from functools import wraps
 
+# ANSI Color Codes natively supported by WSL
+class Colors:
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    CYAN = '\033[96m'
+    MAGENTA = '\033[95m'
+    RESET = '\033[0m'
+
 def clear_screen():
     """Clears the terminal screen for a clean UI."""
+    print("\033[2J\033[H", end="")
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def typewriter(delay = 0.03):
+def typewriter(delay = 0.03, color = Colors.RESET):
     """
     A custom decorator that prints the output of a function
     character by character to simulate a typewriter effect.
@@ -17,6 +27,7 @@ def typewriter(delay = 0.03):
         def wrapper(*args, **kwargs):
             text = func(*args, **kwargs)
             if text:
+                sys.stdout.write(color)
                 for char in text:
                     sys.stdout.write(char)
                     sys.stdout.flush()
@@ -25,7 +36,7 @@ def typewriter(delay = 0.03):
         return wrapper
     return decorator
 
-@typewriter(delay = 0.01)
+@typewriter(delay = 0.01, color = Colors.CYAN)
 def display_intro():
     return """
         =========================================

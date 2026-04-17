@@ -1,7 +1,7 @@
 import re
 import time
 from entities import Player, Enemy
-
+from engine import Colors
 
 # 1. CUSTOM EXCEPTION (2 pts)
 class InvalidCombatActionError(Exception):
@@ -69,14 +69,14 @@ def combat_loop(player: Player, enemy: Enemy):
                 if "potion" in target and player.inventory.get("Health Potion", 0) > 0:
                     player.heal(30)
                     player.inventory["Health Potion"] -= 1
-                    print("\nYou drank a Health Potion and recovered 30 HP!")
+                    print(f"\n{Colors.GREEN}You drank a Health Potion and recovered 30 HP!{Colors.RESET}")
                 else:
                     print("\nYou don't have that item or can't use it right now!")
                     continue
 
         except InvalidCombatActionError as e:
             # Catching and handling our custom exception!
-            print(f"\n[Error] {e}")
+            print(f"\n{Colors.RED}[Error] {e}{Colors.RESET}")
             continue
 
         # Enemy's turn to attack (if they survived!)

@@ -2,6 +2,7 @@ from engine import clear_screen, display_intro
 from entities import Player
 from world import encounter_generator
 from combat import combat_loop
+from engine import clear_screen, display_intro, Colors
 import save_manager
 import time
 
@@ -29,14 +30,14 @@ def main_menu(player: Player, rooms):
             elif encounter == "trap":
                 damage = 15
                 player.take_damage(damage)
-                print(f"SNAP! You stepped on a trap and took {damage} damage!")
+                print(f"{Colors.RED}SNAP! You stepped on a trap and took {damage} damage!{Colors.RESET}")
                 print(f"Current Health: {player.health}/{player.max_health}")
 
             elif isinstance(encounter, dict):
                 # Comprehensions or basic dictionary logic for loot
                 item = encounter["item"]
                 qty = encounter["quantity"]
-                print(f"You found a chest containing: {qty}x {item}!")
+                print(f"{Colors.GREEN}You found a chest containing: {qty}x {item}!{Colors.RESET}")
                 # Add to inventory safely
                 player.inventory[item] = player.inventory.get(item, 0) + qty
 
