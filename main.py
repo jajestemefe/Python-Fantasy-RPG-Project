@@ -36,5 +36,10 @@ if __name__ == "__main__":
     clear_screen()
     display_intro()
 
-    hero = Player(name = "Hero")
+    player_name = input("\What is your name, adventurer? > ").strip()
+
+    if not player_name:
+        player_name = "Nameless Hero"
+
+    hero = Player(name = player_name)
     main_menu(hero)
