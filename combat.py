@@ -44,10 +44,22 @@ def combat_loop(player: Player, enemy: Enemy):
 
         print("Your available items:", ", ".join([f"{k} ({v})" for k, v in sorted_items]))
 
-        command = input("\nWhat will you do? (e.g., 'attack enemy', 'use potion') > ")
+        print("\nActions:")
+        print(f"[1] Attack {enemy.name}")
+        print("[2] Use Health Potion")
+
+        raw_command = input("\nWhat will you do? (Choose 1, 2, or type command) > ").strip()
+
+        # The Shortcut Interceptor: Translates numbers into regex-friendly commands
+        if raw_command == "1":
+            command_to_parse = f"attack {enemy.name}"
+        elif raw_command == "2":
+            command_to_parse = "use potion"
+        else:
+            command_to_parse = raw_command
 
         try:
-            action, target = parse_combat_command(command)
+            action, target = parse_combat_command(command_to_parse)
 
             if action == "attack":
                 print(f"\nYou attack the {enemy.name} for {player.attack_power} damage!")
