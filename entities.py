@@ -19,6 +19,8 @@ class Player(Character):
     def __init__(self, name: str):
         super().__init__(name, health = 100, attack_power = 10)
 
+        self.xp = 0
+
         self.inventory = \
         {
             "Health Potion": 2,

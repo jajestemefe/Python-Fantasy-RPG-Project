@@ -44,5 +44,5 @@ def display_intro():
         =========================================
         You awaken in a dark, cold room. 
         The smell of damp stone fills the air.
-        Your journey begins now...
+        Your journey begins now...\n
         """

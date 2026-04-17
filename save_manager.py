@@ -10,11 +10,18 @@ SAVE_DIR = "saves"
 if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR)
 
-
 def get_save_files():
     """Returns a list of available save files."""
     return glob.glob(os.path.join(SAVE_DIR, "*.json"))
 
+def delete_save(slot_name: str):
+    """Deletes a specific save file."""
+    filepath = os.path.join(SAVE_DIR, f"{slot_name}.json")
+    if os.path.exists(filepath):
+        os.remove(filepath)
+        print(f"\n{Colors.GREEN}[ Save '{slot_name}' deleted successfully. ]{Colors.RESET}")
+    else:
+        print(f"\n{Colors.RED}[ Save not found. ]{Colors.RESET}")
 
 def save_game(player: Player, slot_name: str):
     """Saves the player's state to a specific JSON file."""
@@ -23,10 +30,10 @@ def save_game(player: Player, slot_name: str):
         "health": player.health,
         "max_health": player.max_health,
         "attack_power": player.attack_power,
-        "inventory": player.inventory
+        "inventory": player.inventory,
+        "xp": player.xp  # NEW: Saving XP
     }
 
-    # Save the file directly into the saves/ folder
     filepath = os.path.join(SAVE_DIR, f"{slot_name}.json")
     with open(filepath, "w") as file:
         json.dump(data, file, indent=4)
@@ -48,5 +55,7 @@ def load_game(slot_name: str) -> Player | None:
     loaded_player.max_health = data["max_health"]
     loaded_player.attack_power = data["attack_power"]
     loaded_player.inventory = data["inventory"]
+    # NEW: Loading XP with a fallback to 0 in case you load an old save file!
+    loaded_player.xp = data.get("xp", 0)
 
     return loaded_player

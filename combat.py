@@ -1,7 +1,7 @@
 import re
 import time
 from entities import Player, Enemy
-from engine import Colors
+from engine import Colors, clear_screen
 
 
 # 1. CUSTOM EXCEPTION (2 pts)
@@ -27,6 +27,7 @@ def parse_combat_command(command: str):
 
 def combat_loop(player: Player, enemy: Enemy):
     """The main loop for fighting an enemy."""
+    clear_screen()
     print(f"\n--- COMBAT INITIATED: {player.name} vs {enemy.name} ---")
 
     while player.is_alive() and enemy.is_alive():
@@ -56,10 +57,12 @@ def combat_loop(player: Player, enemy: Enemy):
             action, target = parse_combat_command(command_to_parse)
 
             if action == "attack":
+                clear_screen()
                 print(f"\nYou attack the {enemy.name} for {player.attack_power} damage!")
                 enemy.take_damage(player.attack_power)
 
             elif action == "use":
+                clear_screen()
                 if "potion" in target:
                     if player.inventory.get("Health Potion", 0) > 0:
                         player.heal(30)
@@ -84,10 +87,13 @@ def combat_loop(player: Player, enemy: Enemy):
             player.take_damage(enemy.attack_power)
 
     if player.is_alive():
+        clear_screen()
+        player.xp += enemy.xp_reward
         print(f"\n*** You defeated the {enemy.name}! You gained {enemy.xp_reward} XP. ***")
         time.sleep(1.5)
         return True
     else:
+        clear_screen()
         print("\n*** You have been defeated... ***")
         time.sleep(1.5)
         return False
