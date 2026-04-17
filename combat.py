@@ -3,6 +3,7 @@ import time
 from entities import Player, Enemy
 from engine import Colors
 
+
 # 1. CUSTOM EXCEPTION (2 pts)
 class InvalidCombatActionError(Exception):
     """Raised when the player types a command the game doesn't understand."""
@@ -14,11 +15,9 @@ def parse_combat_command(command: str):
     2. REGULAR EXPRESSIONS (1 pt)
     Parses commands like 'attack goblin' or 'use potion' using regex.
     """
-    # This regex looks for the word 'attack' or 'use', followed by a space, and then the target
     match = re.match(r"(?i)^(attack|use)\s+(.+)$", command.strip())
 
     if not match:
-        # Raising our custom exception!
         raise InvalidCombatActionError(f"I don't understand '{command}'. Try 'attack <target>' or 'use potion'.")
 
     action = match.group(1).lower()
@@ -34,12 +33,7 @@ def combat_loop(player: Player, enemy: Enemy):
         print(f"\n{player.name} HP: {player.health}/{player.max_health}")
         print(f"{enemy.name} HP: {enemy.health}/{enemy.max_health}")
 
-        # 3. DICTIONARY COMPREHENSION (2 pts)
-        # We create a new dictionary containing ONLY items we actually have in stock
         available_items = {item: qty for item, qty in player.inventory.items() if qty > 0}
-
-        # 4. LAMBDA FUNCTION (3 pts)
-        # We sort the available items alphabetically by their name (the first element in the tuple 'x[0]')
         sorted_items = sorted(available_items.items(), key=lambda x: x[0])
 
         print("Your available items:", ", ".join([f"{k} ({v})" for k, v in sorted_items]))
@@ -50,7 +44,7 @@ def combat_loop(player: Player, enemy: Enemy):
 
         raw_command = input("\nWhat will you do? (Choose 1, 2, or type command) > ").strip()
 
-        # The Shortcut Interceptor: Translates numbers into regex-friendly commands
+        # The Shortcut Interceptor
         if raw_command == "1":
             command_to_parse = f"attack {enemy.name}"
         elif raw_command == "2":
@@ -66,26 +60,29 @@ def combat_loop(player: Player, enemy: Enemy):
                 enemy.take_damage(player.attack_power)
 
             elif action == "use":
-                if "potion" in target and player.inventory.get("Health Potion", 0) > 0:
-                    player.heal(30)
-                    player.inventory["Health Potion"] -= 1
-                    print(f"\n{Colors.GREEN}You drank a Health Potion and recovered 30 HP!{Colors.RESET}")
+                if "potion" in target:
+                    if player.inventory.get("Health Potion", 0) > 0:
+                        player.heal(30)
+                        player.inventory["Health Potion"] -= 1
+                        print(f"\n{Colors.GREEN}You drank a Health Potion and recovered 30 HP!{Colors.RESET}")
+                    else:
+                        # NEW EXPLICIT WARNING
+                        print(
+                            f"\n{Colors.RED}You reach into your bag, but you are out of Health Potions!{Colors.RESET}")
+                        continue
                 else:
-                    print("\nYou don't have that item or can't use it right now!")
+                    print(f"\n{Colors.RED}You can't use that right now!{Colors.RESET}")
                     continue
 
         except InvalidCombatActionError as e:
-            # Catching and handling our custom exception!
             print(f"\n{Colors.RED}[Error] {e}{Colors.RESET}")
             continue
 
-        # Enemy's turn to attack (if they survived!)
         if enemy.is_alive():
             time.sleep(1)
             print(f"\nThe {enemy.name} attacks you for {enemy.attack_power} damage!")
             player.take_damage(enemy.attack_power)
 
-    # Combat Resolution
     if player.is_alive():
         print(f"\n*** You defeated the {enemy.name}! You gained {enemy.xp_reward} XP. ***")
         time.sleep(1.5)

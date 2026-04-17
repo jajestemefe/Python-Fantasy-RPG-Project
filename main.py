@@ -62,6 +62,16 @@ def main_menu(player: Player, rooms):
         elif choice == '3':
             save_slot = input("\nEnter a name for this save slot (e.g., '1', 'my_save') > ").strip()
             if save_slot:
+                #OVERWRITE WARNING LOGIC
+                filepath = os.path.join(save_manager.SAVE_DIR, f"{save_slot}.json")
+                if os.path.exists(filepath):
+                    confirm = input(f"{Colors.YELLOW}Warning: Save '{save_slot}' already exists. Overwrite? (y/n) > {Colors.RESET}").lower()
+                    if confirm != 'y':
+                        print(f"{Colors.RED}Save cancelled.{Colors.RESET}")
+                        time.sleep(1.5)
+                        clear_screen()
+                        continue
+
                 save_manager.save_game(player, save_slot)
             else:
                 print(f"{Colors.RED}Invalid save name. Cancelled.{Colors.RESET}")
@@ -74,20 +84,29 @@ def main_menu(player: Player, rooms):
                 print(f"{Colors.YELLOW}No save files found.{Colors.RESET}")
             else:
                 print("\nAvailable Saves:")
-                for save_file in save_files:
-                    # Print just the name, removing the folder path and .json extension
-                    print(f"- {os.path.basename(save_file).replace('.json', '')}")
+                # INDEXED LOAD LIST
+                for idx, save_file in enumerate(save_files, 1):
+                    name = os.path.basename(save_file).replace('.json', '')
+                    print(f"[{idx}] {name}")
 
-                save_slot = input("\nEnter the name of the save to load (or press Enter to cancel) > ").strip()
-                if save_slot:
-                    loaded_hero = save_manager.load_game(save_slot)
+                save_choice = input("\nEnter the number of the save to load (or press Enter to cancel) > ").strip()
+
+                # Check if the user typed a valid number
+                if save_choice.isdigit() and 1 <= int(save_choice) <= len(save_files):
+                    # Match the number back to the correct file
+                    chosen_file = save_files[int(save_choice) - 1]
+                    slot_name = str(os.path.basename(chosen_file)).replace('.json', '')
+
+                    loaded_hero = save_manager.load_game(slot_name)
                     if loaded_hero:
-                        player = loaded_hero  # Replace the current player with the loaded one!
+                        player = loaded_hero
                         print(f"{Colors.GREEN}\nWelcome back, {player.name}!{Colors.RESET}")
-                    else:
-                        print(f"{Colors.RED}Save not found.{Colors.RESET}")
+                elif save_choice:
+                    print(f"{Colors.RED}Invalid selection.{Colors.RESET}")
+
             time.sleep(1.5)
             clear_screen()
+
 
         elif choice == '5':
             print("\nThanks for playing! Goodbye.")
