@@ -7,7 +7,6 @@ def encounter_generator():
     A generator function that continuously yields random encounters.
     Satisfies the 'Generator' requirement.
     """
-    # A list of possible events we can draw from
     event_pool = [
         "empty",
         "empty",
@@ -18,7 +17,6 @@ def encounter_generator():
     ]
 
     while True:
-        # Yields one random event at a time, pausing execution until called again
         event = random.choice(event_pool)
 
         if event == "enemy_goblin":
