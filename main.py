@@ -1,6 +1,8 @@
 from engine import clear_screen, display_intro
 from entities import Player
 from world import encounter_generator
+from combat import combat_loop
+import save_manager
 import time
 
 def main_menu(player: Player, rooms):
@@ -41,7 +43,14 @@ def main_menu(player: Player, rooms):
             else:
                 # It must be an Enemy object!
                 print(f"A {encounter.name} blocks your path!")
-                print("(Combat system coming soon...)")
+                time.sleep(1)
+
+                # Launch the combat loop!
+                survived = combat_loop(player, encounter)
+
+                if not survived:
+                    print("\nGame Over. Restart to try again.")
+                    break  # Ends the game loop
 
             input("\nPress Enter to return to the menu...")
             clear_screen()
@@ -55,23 +64,38 @@ def main_menu(player: Player, rooms):
             clear_screen()
         elif choice == '3':
             print("Saving game...")
+            save_manager.save_game(player)
+            time.sleep(1.5)
+            clear_screen()
         elif choice == '4':
             print("\nThanks for playing! Goodbye.")
             break
         else:
             print("\nInvalid choice. Please enter a number between 1 and 4.")
 
+
 if __name__ == "__main__":
     clear_screen()
     display_intro()
 
-    player_name = input("What is your name, adventurer? > ").strip()
+    hero = None
 
-    if not player_name:
-        player_name = "Nameless Hero"
+    # Check if a save file exists and ask to load it
+    import os
 
-    hero = Player(name = player_name)
+    if os.path.exists(save_manager.SAVE_FILE):
+        load_choice = input("\nA save file was found. Do you want to load it? (y/n) > ").strip().lower()
+        if load_choice == 'y':
+            hero = save_manager.load_game()
+            print(f"\nWelcome back, {hero.name}!")
+            time.sleep(1.5)
+
+    # If they didn't load a game, create a new character
+    if hero is None:
+        player_name = input("\nWhat is your name, adventurer? > ").strip()
+        if not player_name:
+            player_name = "Nameless Hero"
+        hero = Player(name=player_name)
 
     dungeon_rooms = encounter_generator()
-
     main_menu(hero, dungeon_rooms)
