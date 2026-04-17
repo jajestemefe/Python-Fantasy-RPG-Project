@@ -1,12 +1,23 @@
 import json
 import os
+import glob
 from entities import Player
+from engine import Colors
 
-SAVE_FILE = "savegame.json"
+SAVE_DIR = "saves"
+
+# Automatically create the 'saves' directory if it doesn't exist when the game boots
+if not os.path.exists(SAVE_DIR):
+    os.makedirs(SAVE_DIR)
 
 
-def save_game(player: Player):
-    """Saves the player's state to a JSON file. Satisfies serialization requirement."""
+def get_save_files():
+    """Returns a list of available save files."""
+    return glob.glob(os.path.join(SAVE_DIR, "*.json"))
+
+
+def save_game(player: Player, slot_name: str):
+    """Saves the player's state to a specific JSON file."""
     data = {
         "name": player.name,
         "health": player.health,
@@ -15,23 +26,23 @@ def save_game(player: Player):
         "inventory": player.inventory
     }
 
-    # Using the 'with' context manager to safely open and close the file
-    with open(SAVE_FILE, "w") as file:
+    # Save the file directly into the saves/ folder
+    filepath = os.path.join(SAVE_DIR, f"{slot_name}.json")
+    with open(filepath, "w") as file:
         json.dump(data, file, indent=4)
 
-    print("\n[ Game successfully saved! ]")
+    print(f"\n{Colors.GREEN}[ Game successfully saved to slot '{slot_name}'! ]{Colors.RESET}")
 
 
-def load_game() -> Player | None:
-    """Loads the player's state from a JSON file if it exists."""
-    if not os.path.exists(SAVE_FILE):
+def load_game(slot_name: str) -> Player | None:
+    """Loads the player's state from a JSON file."""
+    filepath = os.path.join(SAVE_DIR, f"{slot_name}.json")
+    if not os.path.exists(filepath):
         return None
 
-    # Safely open the file using 'with'
-    with open(SAVE_FILE, "r") as file:
+    with open(filepath, "r") as file:
         data = json.load(file)
 
-    # Recreate the player object with the saved data
     loaded_player = Player(name=data["name"])
     loaded_player.health = data["health"]
     loaded_player.max_health = data["max_health"]
