@@ -1,4 +1,4 @@
-from engine import clear_screen, display_intro, Colors
+from engine import clear_screen, display_intro, Colors, display_stats
 from entities import Player
 from world import encounter_generator
 from combat import combat_loop
@@ -6,14 +6,13 @@ import save_manager
 import time
 import os
 
-
-def display_stats(player: Player):
-    """Draws a persistent HUD at the top of the screen."""
-    print(f"{Colors.MAGENTA}===================================================={Colors.RESET}")
-    print(
-        f"{Colors.MAGENTA} ADVENTURER: {player.name} | HP: {player.health}/{player.max_health} | XP: {player.xp} {Colors.RESET}")
-    print(f"{Colors.MAGENTA}===================================================={Colors.RESET}")
-
+def is_skip_intro():
+    clear_screen()
+    print(f"{Colors.YELLOW}Skip intro? (y/n) > {Colors.RESET}")
+    if input().strip() != 'y':
+        clear_screen()
+        display_intro()
+    clear_screen()
 
 def main_menu(player: Player, rooms):
     """The main interactive loop for the game."""
@@ -31,6 +30,8 @@ def main_menu(player: Player, rooms):
         choice = input("What would you like to do? > ").strip()
 
         if choice == '1':
+            clear_screen()
+            display_stats(player)
             print("\nYou step forward into the darkness...")
             time.sleep(1)
 
@@ -64,6 +65,8 @@ def main_menu(player: Player, rooms):
             clear_screen()
 
         elif choice == '2':
+            clear_screen()
+            display_stats(player)
             # NEW: Interactive Inventory Loop
             while True:
                 clear_screen()
@@ -172,7 +175,8 @@ def main_menu(player: Player, rooms):
             confirm = input(
                 f"\n{Colors.YELLOW}Start a new game? Any unsaved progress will be lost. (y/n) > {Colors.RESET}").strip().lower()
             if confirm == 'y':
-                clear_screen()
+                is_skip_intro()
+
                 player_name = input(f"{Colors.YELLOW}What is your name, adventurer? > {Colors.RESET}").strip()
                 if not player_name:
                     player_name = "Nameless Hero"
@@ -180,7 +184,7 @@ def main_menu(player: Player, rooms):
                 # Overwrite current player and generator completely
                 player = Player(name=player_name)
                 rooms = encounter_generator()
-                print(f"\n{Colors.GREEN}New adventure started! Good luck, {player.name}.{Colors.RESET}")
+                print(f"\n{Colors.GREEN}New adventure started! Good luck, {player.name}...{Colors.RESET}")
                 time.sleep(1.5)
             clear_screen()
 
@@ -197,14 +201,13 @@ def main_menu(player: Player, rooms):
 def main():
     """The main entry point for the game."""
     clear_screen()
-    display_intro()
 
     hero = None
     saves = save_manager.get_save_files()
 
     if saves:
         load_choice = input(
-            f"\n{Colors.YELLOW}Save files found. Do you want to load a game? (y/n) > {Colors.RESET}").strip().lower()
+            f"{Colors.YELLOW}Save files found. Do you want to load a game? (y/n) > {Colors.RESET}").strip().lower()
 
         if load_choice == 'y':
             while True:
@@ -231,14 +234,20 @@ def main():
                 else:
                     print(f"{Colors.RED}Invalid selection. Please try again.{Colors.RESET}")
 
+    else:
+        is_skip_intro()
+
     if hero is None:
-        player_name = input(f"\n{Colors.YELLOW}What is your name, adventurer? > {Colors.RESET}").strip()
+        player_name = input(f"{Colors.YELLOW}What is your name, adventurer? > {Colors.RESET}").strip()
         if not player_name:
             player_name = "Nameless Hero"
         hero = Player(name=player_name)
 
     clear_screen()
     dungeon_rooms = encounter_generator()
+    print(f"{Colors.GREEN}New adventure started! Good luck, {hero.name}...{Colors.RESET}")
+    time.sleep(1.5)
+    clear_screen()
     main_menu(hero, dungeon_rooms)
 
 

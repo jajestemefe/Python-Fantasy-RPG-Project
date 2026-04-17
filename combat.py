@@ -1,7 +1,8 @@
 import re
 import time
 from entities import Player, Enemy
-from engine import Colors, clear_screen
+from engine import Colors, clear_screen, display_stats
+
 
 
 # 1. CUSTOM EXCEPTION (2 pts)
@@ -28,6 +29,7 @@ def parse_combat_command(command: str):
 def combat_loop(player: Player, enemy: Enemy):
     """The main loop for fighting an enemy."""
     clear_screen()
+    display_stats(player)
     print(f"\n--- COMBAT INITIATED: {player.name} vs {enemy.name} ---")
 
     while player.is_alive() and enemy.is_alive():

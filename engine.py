@@ -2,6 +2,7 @@ import sys
 import time
 import os
 from functools import wraps
+from entities import Player
 
 # ANSI Color Codes natively supported by WSL
 class Colors:
@@ -46,3 +47,10 @@ def display_intro():
         The smell of damp stone fills the air.
         Your journey begins now...\n
         """
+
+def display_stats(player: Player):
+    """Draws a persistent HUD at the top of the screen."""
+    print(f"{Colors.MAGENTA}===================================================={Colors.RESET}")
+    print(
+        f"{Colors.MAGENTA} ADVENTURER: {player.name} | HP: {player.health}/{player.max_health} | XP: {player.xp} {Colors.RESET}")
+    print(f"{Colors.MAGENTA}===================================================={Colors.RESET}")
