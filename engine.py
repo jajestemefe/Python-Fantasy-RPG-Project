@@ -1,8 +1,13 @@
+from __future__ import annotations
 import sys
 import time
 import os
 from functools import wraps
-from entities import Player
+from typing import TYPE_CHECKING
+
+# Import Player only for static type checking — avoids a circular import at runtime.
+if TYPE_CHECKING:
+    from entities import Player
 
 # ANSI Color Codes natively supported by WSL
 class Colors:
@@ -47,6 +52,9 @@ def display_intro():
         The smell of damp stone fills the air.
         Your journey begins now...\n
         """
+@typewriter(delay = 0.01, color = Colors.CYAN)
+def print_anim(s: str):
+    return s
 
 def display_stats(player: Player):
     """Draws a persistent HUD at the top of the screen."""
@@ -54,3 +62,11 @@ def display_stats(player: Player):
     print(
         f"{Colors.MAGENTA} ADVENTURER: {player.name} | HP: {player.health}/{player.max_health} | XP: {player.xp} {Colors.RESET}")
     print(f"{Colors.MAGENTA}===================================================={Colors.RESET}")
+
+def is_skip_intro():
+    clear_screen()
+    print_anim(f"{Colors.YELLOW}Skip intro? (y/n) > {Colors.RESET}")
+    if input().strip() != 'y':
+        clear_screen()
+        display_intro()
+    clear_screen()

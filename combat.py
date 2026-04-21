@@ -2,32 +2,38 @@ import re
 import time
 from entities import Player, Enemy
 from engine import Colors, clear_screen, display_stats
+from item_manager import get_item, apply_item
 
 
+# ── Custom exception ──────────────────────────────────────────────────────────
 
-# 1. CUSTOM EXCEPTION (2 pts)
 class InvalidCombatActionError(Exception):
     """Raised when the player types a command the game doesn't understand."""
     pass
 
 
-def parse_combat_command(command: str):
+# ── Command parser ────────────────────────────────────────────────────────────
+
+def parse_combat_command(command: str) -> tuple[str, str]:
     """
-    2. REGULAR EXPRESSIONS (1 pt)
-    Parses commands like 'attack goblin' or 'use potion' using regex.
+    REGULAR EXPRESSIONS — parses commands like 'attack goblin' or 'use potion'.
+    Raises InvalidCombatActionError if the input doesn't match the expected pattern.
     """
     match = re.match(r"(?i)^(attack|use)\s+(.+)$", command.strip())
-
     if not match:
-        raise InvalidCombatActionError(f"I don't understand '{command}'. Try 'attack <target>' or 'use potion'.")
+        raise InvalidCombatActionError(
+            f"I don't understand '{command}'. Try 'attack <target>' or 'use <item>'."
+        )
+    return match.group(1).lower(), match.group(2).lower()
 
-    action = match.group(1).lower()
-    target = match.group(2).lower()
-    return action, target
 
+# ── Main combat loop ──────────────────────────────────────────────────────────
 
-def combat_loop(player: Player, enemy: Enemy):
-    """The main loop for fighting an enemy."""
+def combat_loop(player: Player, enemy: Enemy) -> bool:
+    """
+    Run a turn-based fight between player and enemy.
+    Returns True if the player survived, False if defeated.
+    """
     clear_screen()
     display_stats(player)
     print(f"\n--- COMBAT INITIATED: {player.name} vs {enemy.name} ---")
@@ -36,22 +42,28 @@ def combat_loop(player: Player, enemy: Enemy):
         print(f"\n{player.name} HP: {player.health}/{player.max_health}")
         print(f"{enemy.name} HP: {enemy.health}/{enemy.max_health}")
 
-        available_items = {item: qty for item, qty in player.inventory.items() if qty > 0}
-        sorted_items = sorted(available_items.items(), key=lambda x: x[0])
-
-        print("Your available items:", ", ".join([f"{k} ({v})" for k, v in sorted_items]))
+        # Only show items that can actually be used in combat (dict comprehension).
+        combat_items = {
+            name: qty for name, qty in player.inventory.items()
+            if qty > 0 and get_item(name) is not None and get_item(name).usable_in_combat
+        }
+        sorted_combat_items = sorted(combat_items.items(), key=lambda x: x[0])
+        item_display = ", ".join(f"{k} ({v})" for k, v in sorted_combat_items) or "none"
+        print(f"Usable items: {item_display}")
 
         print("\nActions:")
-        print(f"[1] Attack {enemy.name}")
-        print("[2] Use Health Potion")
+        print(f"  [1] Attack {enemy.name}")
+        print(f"  [2] Use Health Potion")
+        if combat_items:
+            print(f"  Or type: use <item name>")
 
-        raw_command = input("\nWhat will you do? (Choose 1, 2, or type command) > ").strip()
+        raw_command = input("\nWhat will you do? > ").strip()
 
-        # The Shortcut Interceptor
+        # Shortcut interceptor
         if raw_command == "1":
             command_to_parse = f"attack {enemy.name}"
         elif raw_command == "2":
-            command_to_parse = "use potion"
+            command_to_parse = "use health potion"
         else:
             command_to_parse = raw_command
 
@@ -65,28 +77,36 @@ def combat_loop(player: Player, enemy: Enemy):
 
             elif action == "use":
                 clear_screen()
-                if "potion" in target:
-                    if player.inventory.get("Health Potion", 0) > 0:
-                        player.heal(30)
-                        player.inventory["Health Potion"] -= 1
-                        print(f"\n{Colors.GREEN}You drank a Health Potion and recovered 30 HP!{Colors.RESET}")
-                    else:
-                        # NEW EXPLICIT WARNING
-                        print(
-                            f"\n{Colors.RED}You reach into your bag, but you are out of Health Potions!{Colors.RESET}")
-                        continue
-                else:
-                    print(f"\n{Colors.RED}You can't use that right now!{Colors.RESET}")
+                # Match target to an actual item in the player's inventory
+                # (generator expression — case-insensitive search)
+                matched_name = next(
+                    (n for n in player.inventory
+                     if n.lower() == target and player.inventory[n] > 0),
+                    None,
+                )
+                if matched_name is None:
+                    print(f"\n{Colors.RED}You don't have '{target}'.{Colors.RESET}")
                     continue
+
+                success, msg = apply_item(player, matched_name, "combat", enemy)
+                color = Colors.GREEN if success else Colors.RED
+                print(f"\n{color}{msg}{Colors.RESET}")
+                if not success:
+                    continue  # Failed uses don't trigger an enemy counter-attack
 
         except InvalidCombatActionError as e:
             print(f"\n{Colors.RED}[Error] {e}{Colors.RESET}")
             continue
 
+        # Enemy counter-attack (only after a valid player action)
         if enemy.is_alive():
             time.sleep(1)
             print(f"\nThe {enemy.name} attacks you for {enemy.attack_power} damage!")
             player.take_damage(enemy.attack_power)
+
+    # ── Combat end ────────────────────────────────────────────────────────────
+    # Always clear temporary buffs regardless of outcome.
+    player.reset_temp_buffs()
 
     if player.is_alive():
         clear_screen()
