@@ -48,23 +48,27 @@ def combat_loop(player: Player, enemy: Enemy) -> bool:
             if qty > 0 and get_item(name) is not None and get_item(name).usable_in_combat
         }
         sorted_combat_items = sorted(combat_items.items(), key=lambda x: x[0])
-        item_display = ", ".join(f"{k} ({v})" for k, v in sorted_combat_items) or "none"
-        print(f"Usable items: {item_display}")
 
         print("\nActions:")
         print(f"  [1] Attack {enemy.name}")
-        print(f"  [2] Use Health Potion")
-        if combat_items:
-            print(f"  Or type: use <item name>")
+
+        # Dynamically build a numbered action map for your items
+        action_map = {1: "attack"}
+        for idx, (name, qty) in enumerate(sorted_combat_items, 2):
+            print(f"  [{idx}] Use {name} (x{qty})")
+            action_map[idx] = name
 
         raw_command = input("\nWhat will you do? > ").strip()
 
-        # Shortcut interceptor
-        if raw_command == "1":
-            command_to_parse = f"attack {enemy.name}"
-        elif raw_command == "2":
-            command_to_parse = "use health potion"
+        # The Shortcut Interceptor: Translates numbers to Regex strings
+        if raw_command.isdigit() and int(raw_command) in action_map:
+            choice = int(raw_command)
+            if choice == 1:
+                command_to_parse = f"attack {enemy.name}"
+            else:
+                command_to_parse = f"use {action_map[choice]}"
         else:
+            # Let garbage inputs fall through to trigger the Custom Exception
             command_to_parse = raw_command
 
         try:
@@ -78,7 +82,6 @@ def combat_loop(player: Player, enemy: Enemy) -> bool:
             elif action == "use":
                 clear_screen()
                 # Match target to an actual item in the player's inventory
-                # (generator expression — case-insensitive search)
                 matched_name = next(
                     (n for n in player.inventory
                      if n.lower() == target and player.inventory[n] > 0),
@@ -86,16 +89,19 @@ def combat_loop(player: Player, enemy: Enemy) -> bool:
                 )
                 if matched_name is None:
                     print(f"\n{Colors.RED}You don't have '{target}'.{Colors.RESET}")
+                    time.sleep(1.5)
                     continue
 
                 success, msg = apply_item(player, matched_name, "combat", enemy)
                 color = Colors.GREEN if success else Colors.RED
                 print(f"\n{color}{msg}{Colors.RESET}")
                 if not success:
+                    time.sleep(1.5)
                     continue  # Failed uses don't trigger an enemy counter-attack
 
         except InvalidCombatActionError as e:
             print(f"\n{Colors.RED}[Error] {e}{Colors.RESET}")
+            time.sleep(1.5)
             continue
 
         # Enemy counter-attack (only after a valid player action)
@@ -105,7 +111,6 @@ def combat_loop(player: Player, enemy: Enemy) -> bool:
             player.take_damage(enemy.attack_power)
 
     # ── Combat end ────────────────────────────────────────────────────────────
-    # Always clear temporary buffs regardless of outcome.
     player.reset_temp_buffs()
 
     if player.is_alive():

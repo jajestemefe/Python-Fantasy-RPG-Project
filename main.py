@@ -1,4 +1,3 @@
-import re
 import time
 import os
 
@@ -20,65 +19,44 @@ def _item_tag(name: str, player: Player) -> str:
     return ""
 
 
-def _show_inventory(player: Player):
-    """Render the full inventory with descriptions, types, and equipped status."""
-    clear_screen()
-    display_stats(player)
-    print_anim(f"\n{Colors.CYAN}=== {player.name}'s Inventory ==={Colors.RESET}")
-    print_anim(f"Weapon equipped : {player.equipped_weapon}  |  Attack power : {player.attack_power}\n")
-
-    # List comprehension: items the player actually carries
-    carried = [(name, qty) for name, qty in sorted(player.inventory.items()) if qty > 0]
-
-    if not carried:
-        print_anim("  (your bag is empty)")
-        return
-
-    for name, qty in carried:
-        item_def = get_item(name)
-        tag  = _item_tag(name, player)
-        desc = f"  {Colors.CYAN}» {item_def.description}{Colors.RESET}" if item_def else ""
-        print(f"  {name} x{qty}{tag}")
-        if desc:
-            print(desc)
-
-    print_anim(f"\n{Colors.YELLOW}Commands:{Colors.RESET}")
-    print_anim("  use <item>    — use a potion or strength potion")
-    print_anim("  equip <item>  — equip a weapon")
-    print_anim("  read <item>   — read a book")
-    print_anim("  Enter         — return to main menu")
-
-
 def _inventory_loop(player: Player):
-    """Interactive inventory screen."""
+    """Interactive numbered inventory screen."""
     while True:
-        _show_inventory(player)
-        raw = input("\n> ").strip()
+        clear_screen()
+        display_stats(player)
+        print_anim(f"\n{Colors.CYAN}=== {player.name}'s Inventory ==={Colors.RESET}")
+        print_anim(f"Weapon equipped : {player.equipped_weapon}  |  Attack power : {player.attack_power}\n")
+
+        # List comprehension: items the player actually carries
+        carried = [(name, qty) for name, qty in sorted(player.inventory.items()) if qty > 0]
+
+        if not carried:
+            print_anim("  (your bag is empty)")
+            input("\nPress Enter to return...")
+            break
+
+        # Display Numbered List
+        for idx, (name, qty) in enumerate(carried, 1):
+            item_def = get_item(name)
+            tag  = _item_tag(name, player)
+            desc = f"    {Colors.CYAN}» {item_def.description}{Colors.RESET}" if item_def else ""
+            print(f"  [{idx}] {name} x{qty}{tag}")
+            if desc:
+                print(desc)
+
+        raw = input("\nEnter item number to interact with (or Enter to return) > ").strip()
 
         if not raw:
             break
 
-        # Accept 'use', 'equip', or 'read' as verbs — all route to item.use_in_menu().
-        match = re.match(r"(?i)^(?:use|equip|read)\s+(.+)$", raw)
-        if not match:
-            print_anim(f"\n{Colors.RED}Unknown command. Try 'use <item>', 'equip <item>', or 'read <item>'.{Colors.RESET}")
-            time.sleep(1.5)
-            continue
-
-        target = match.group(1).strip()
-
-        # Case-insensitive search through current inventory (generator expression)
-        matched_name = next(
-            (n for n in player.inventory if n.lower() == target.lower() and player.inventory[n] > 0),
-            None,
-        )
-
-        if matched_name is None:
-            print_anim(f"\n{Colors.RED}You don't have '{target}' in your bag.{Colors.RESET}")
-        else:
-            success, msg = apply_item(player, matched_name, "menu")
+        if raw.isdigit() and 1 <= int(raw) <= len(carried):
+            selected_name = carried[int(raw) - 1][0]
+            # Since our OOP item_manager handles the logic contextually, we just pass "menu"
+            success, msg = apply_item(player, selected_name, "menu")
             color = Colors.GREEN if success else Colors.RED
             print_anim(f"\n{color}{msg}{Colors.RESET}")
+        else:
+            print_anim(f"\n{Colors.RED}Invalid selection.{Colors.RESET}")
 
         time.sleep(1.8)
 
@@ -99,7 +77,8 @@ def main_menu(player: Player, rooms):
         print_anim("[6] New Game")
         print_anim("[7] Quit")
 
-        choice = input("\nWhat would you like to do? > ").strip()
+        print_anim(f"{Colors.YELLOW}\nWhat would you like to do?")
+        choice = input(f"> {Colors.RESET}").strip()
 
         # ── Explore ──────────────────────────────────────────────────────────
         if choice == "1":
@@ -193,12 +172,14 @@ def main_menu(player: Player, rooms):
                     name = os.path.basename(sf).replace(".json", "")
                     print_anim(f"  [{idx}] {name}")
 
-                del_choice = input("\nEnter number to delete (or Enter to cancel) > ").strip()
+                print_anim(f"\nEnter number to delete (or Enter to cancel)")
+                del_choice = input("> ").strip()
                 if del_choice.isdigit() and 1 <= int(del_choice) <= len(save_files):
                     slot_name = os.path.basename(save_files[int(del_choice) - 1]).replace(".json", "")
-                    confirm   = input(
+                    print_anim(
                         f"{Colors.RED}Delete '{slot_name}'? This cannot be undone. (y/n) > {Colors.RESET}"
-                    ).strip().lower()
+                    )
+                    confirm   = input().strip().lower()
                     if confirm == "y":
                         save_manager.delete_save(slot_name)
                 elif del_choice:
@@ -208,19 +189,26 @@ def main_menu(player: Player, rooms):
 
         # ── New game ──────────────────────────────────────────────────────────
         elif choice == "6":
-            confirm = input(
-                f"\n{Colors.YELLOW}Start a new game? Unsaved progress will be lost. (y/n) > {Colors.RESET}"
-            ).strip().lower()
+            print_anim(f"\n{Colors.YELLOW}Start a new game? Unsaved progress will be lost. (y/n)")
+            confirm = input(f"> {Colors.RESET}").strip().lower()
             if confirm == "y":
+                time.sleep(1.5)
                 is_skip_intro()
                 player = create_player()
                 rooms  = encounter_generator()
+            else:
                 time.sleep(1.5)
 
         # ── Quit ──────────────────────────────────────────────────────────────
         elif choice == "7":
-            print_anim("\nThanks for playing! Goodbye.")
-            break
+            print_anim(f"{Colors.YELLOW}\nUnsaved progress will be lost, are you sure? (y/n)")
+
+            if input(f"> {Colors.RESET}").strip() == 'y':
+                print_anim(f"\n{Colors.GREEN}Thanks for playing! Goodbye.\n")
+                break
+            else:
+                continue
+
 
         else:
             print_anim(f"\n{Colors.RED}Invalid choice. Enter a number between 1 and 7.{Colors.RESET}")
@@ -232,7 +220,7 @@ def main_menu(player: Player, rooms):
 def start():
     """Main entry point. ask_if_load() always returns a valid Player."""
     clear_screen()
-    hero          = ask_if_load()          # BUG FIXED: never returns None anymore
+    hero          = ask_if_load()
     dungeon_rooms = encounter_generator()
     clear_screen()
     main_menu(hero, dungeon_rooms)

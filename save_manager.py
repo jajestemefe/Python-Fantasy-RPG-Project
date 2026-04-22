@@ -23,9 +23,9 @@ def delete_save(slot_name: str):
     filepath = os.path.join(SAVE_DIR, f"{slot_name}.json")
     if os.path.exists(filepath):
         os.remove(filepath)
-        print(f"\n{Colors.GREEN}[ Save '{slot_name}' deleted successfully. ]{Colors.RESET}")
+        print_anim(f"\n{Colors.GREEN}[ Save '{slot_name}' deleted successfully. ]{Colors.RESET}")
     else:
-        print(f"\n{Colors.RED}[ Save not found. ]{Colors.RESET}")
+        print_anim(f"\n{Colors.RED}[ Save not found. ]{Colors.RESET}")
 
 
 def save_game(player: Player, slot_name: str):
@@ -80,12 +80,11 @@ def ask_if_load() -> Player:
         is_skip_intro()
         return create_player()
 
-    load_choice = input(
-        f"{Colors.YELLOW}Save files found. Load a game? (y/n) > {Colors.RESET}"
-    ).strip().lower()
+    print_anim(f"{Colors.YELLOW}Save files found. Load a game? (y/n)")
+    load_choice = input(f"> {Colors.RESET}").strip().lower()
 
     if load_choice != "y":
-        is_skip_intro()
+        #is_skip_intro()
         return create_player()
 
     # User wants to load — let them pick a slot.

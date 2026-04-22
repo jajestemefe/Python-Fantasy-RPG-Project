@@ -69,4 +69,6 @@ def is_skip_intro():
     if input().strip() != 'y':
         clear_screen()
         display_intro()
+        if input().strip():
+            clear_screen()
     clear_screen()
