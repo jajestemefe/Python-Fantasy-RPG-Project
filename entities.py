@@ -1,7 +1,7 @@
 import time
 
 import engine
-from engine import print_anim
+from engine import print_anim, clear_screen
 
 
 class Character:
@@ -75,6 +75,7 @@ class Enemy(Character):
 
 def create_player() -> Player:
     """Prompt for a name and return a fresh Player."""
+    clear_screen()
     print_anim(f"{engine.Colors.YELLOW}What is your name, adventurer?")
     player_name = input(f"> {engine.Colors.RESET}").strip()
     if not player_name:

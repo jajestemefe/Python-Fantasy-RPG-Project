@@ -4,9 +4,12 @@ import glob
 import time
 
 from entities import Player, create_player
-from engine import Colors, print_anim, is_skip_intro
+from engine import Colors, print_anim, is_skip_intro, display_intro
 
 SAVE_DIR = "saves"
+
+"""The settings for the player"""
+animation = True
 
 # Automatically create the saves directory on first run.
 if not os.path.exists(SAVE_DIR):
@@ -77,14 +80,15 @@ def ask_if_load() -> Player:
 
     if not saves:
         # No saves exist at all — skip straight to a new game.
-        is_skip_intro()
+        #is_skip_intro()
+        display_intro()
         return create_player()
 
     print_anim(f"{Colors.YELLOW}Save files found. Load a game? (y/n)")
     load_choice = input(f"> {Colors.RESET}").strip().lower()
 
     if load_choice != "y":
-        #is_skip_intro()
+        is_skip_intro()
         return create_player()
 
     # User wants to load — let them pick a slot.
@@ -94,9 +98,8 @@ def ask_if_load() -> Player:
             name = os.path.basename(save_file).replace(".json", "")
             print_anim(f"  [{idx}] {name}")
 
-        save_choice = input(
-            "\nEnter number to load (or Enter to start a new game) > "
-        ).strip()
+        print_anim("\nEnter number to load (or Enter to start a new game)\n> ")
+        save_choice = input().strip()
 
         if not save_choice:
             print_anim(f"{Colors.YELLOW}Starting a new game...{Colors.RESET}")

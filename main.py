@@ -32,7 +32,8 @@ def _inventory_loop(player: Player):
 
         if not carried:
             print_anim("  (your bag is empty)")
-            input("\nPress Enter to return...")
+            print_anim("\nPress Enter to return...")
+            input()
             break
 
         # Display Numbered List
@@ -40,11 +41,12 @@ def _inventory_loop(player: Player):
             item_def = get_item(name)
             tag  = _item_tag(name, player)
             desc = f"    {Colors.CYAN}» {item_def.description}{Colors.RESET}" if item_def else ""
-            print(f"  [{idx}] {name} x{qty}{tag}")
+            print_anim(f"  [{idx}] {name} x{qty}{tag}")
             if desc:
-                print(desc)
+                print_anim(desc)
 
-        raw = input("\nEnter item number to interact with (or Enter to return) > ").strip()
+        print_anim("\nEnter item number to interact with (or Enter to return)\n> ")
+        raw = input().strip()
 
         if not raw:
             break
@@ -68,14 +70,15 @@ def main_menu(player: Player, rooms):
     while True:
         clear_screen()
         display_stats(player)
-        print_anim(f"\n{Colors.CYAN}--- MAIN MENU ---{Colors.RESET}")
+        print_anim(f"\n{Colors.CYAN}--- MAIN MENU ---")
         print_anim("[1] Explore the Dungeon")
         print_anim("[2] Check Inventory")
-        print_anim("[3] Save Game")
-        print_anim("[4] Load Game")
-        print_anim("[5] Delete Save")
-        print_anim("[6] New Game")
-        print_anim("[7] Quit")
+        print_anim("[3] Settings")
+        print_anim("[4] Save Game")
+        print_anim("[5] Load Game")
+        print_anim("[6] Delete Save")
+        print_anim("[7] New Game")
+        print_anim(f"[8] Quit{Colors.RESET}")
 
         print_anim(f"{Colors.YELLOW}\nWhat would you like to do?")
         choice = input(f"> {Colors.RESET}").strip()
@@ -114,21 +117,53 @@ def main_menu(player: Player, rooms):
                     print_anim("\nGame Over. Restart to try again.")
                     break
 
-            input("\nPress Enter to return to the menu...")
+            print_anim("\nPress Enter to return to the menu...")
+            input()
 
         # ── Inventory ────────────────────────────────────────────────────────
         elif choice == "2":
             _inventory_loop(player)
 
-        # ── Save ─────────────────────────────────────────────────────────────
+        # ── Inventory ────────────────────────────────────────────────────────
         elif choice == "3":
-            save_slot = input("\nEnter a name for this save slot > ").strip()
+            while True:
+                clear_screen()
+                display_stats(player)
+                print_anim(f"\n{Colors.CYAN}--- SETTINGS ---")
+                if save_manager.animation:
+                    x = f"{Colors.GREEN}ENABLED"
+                else:
+                    x = f"{Colors.RED}DISABLED"
+                print_anim(f"{Colors.CYAN}[1] Animation of texts: " + x)
+                print_anim(f"{Colors.CYAN}[2] Example setting")
+
+                print_anim(f"\n{Colors.YELLOW}Press enter to return...{Colors.RESET}")
+                setting = input().strip()
+
+                if setting == '1':
+                    if save_manager.animation:
+                        save_manager.animation = False
+                    else:
+                        save_manager.animation = True
+
+                elif setting == '2':
+                    save_manager.animation = True
+
+                else:
+                    time.sleep(1)
+                    break
+
+        # ── Save ─────────────────────────────────────────────────────────────
+        elif choice == "4":
+            print_anim(f"\nEnter a name for this save slot\n> {Colors.RESET}")
+            save_slot = input().strip()
             if save_slot:
                 filepath = os.path.join(save_manager.SAVE_DIR, f"{save_slot}.json")
                 if os.path.exists(filepath):
-                    confirm = input(
-                        f"{Colors.YELLOW}Save '{save_slot}' already exists. Overwrite? (y/n) > {Colors.RESET}"
-                    ).lower()
+
+                    print_anim(f"{Colors.YELLOW}Save '{save_slot}' already exists. Overwrite? (y/n)")
+                    confirm = input(f"> {Colors.RESET}").strip().lower()
+
                     if confirm != "y":
                         print_anim(f"{Colors.RED}Save cancelled.{Colors.RESET}")
                         time.sleep(1.5)
@@ -139,7 +174,7 @@ def main_menu(player: Player, rooms):
             time.sleep(1.5)
 
         # ── Load ─────────────────────────────────────────────────────────────
-        elif choice == "4":
+        elif choice == "5":
             save_files = save_manager.get_save_files()
             if not save_files:
                 print_anim(f"{Colors.YELLOW}No save files found.{Colors.RESET}")
@@ -149,7 +184,8 @@ def main_menu(player: Player, rooms):
                     name = os.path.basename(sf).replace(".json", "")
                     print_anim(f"  [{idx}] {name}")
 
-                save_choice = input("\nEnter number to load (or Enter to cancel) > ").strip()
+                print_anim("\nEnter number to load (or Enter to cancel)")
+                save_choice = input(f"> {Colors.RESET}").strip()
                 if save_choice.isdigit() and 1 <= int(save_choice) <= len(save_files):
                     slot_name   = os.path.basename(save_files[int(save_choice) - 1]).replace(".json", "")
                     loaded_hero = save_manager.load_game(slot_name)
@@ -162,7 +198,7 @@ def main_menu(player: Player, rooms):
             time.sleep(1.5)
 
         # ── Delete save ───────────────────────────────────────────────────────
-        elif choice == "5":
+        elif choice == "6":
             save_files = save_manager.get_save_files()
             if not save_files:
                 print_anim(f"{Colors.YELLOW}No save files found to delete.{Colors.RESET}")
@@ -173,7 +209,7 @@ def main_menu(player: Player, rooms):
                     print_anim(f"  [{idx}] {name}")
 
                 print_anim(f"\nEnter number to delete (or Enter to cancel)")
-                del_choice = input("> ").strip()
+                del_choice = input(f"> {Colors.RESET}").strip()
                 if del_choice.isdigit() and 1 <= int(del_choice) <= len(save_files):
                     slot_name = os.path.basename(save_files[int(del_choice) - 1]).replace(".json", "")
                     print_anim(
@@ -188,7 +224,7 @@ def main_menu(player: Player, rooms):
             time.sleep(1.5)
 
         # ── New game ──────────────────────────────────────────────────────────
-        elif choice == "6":
+        elif choice == "7":
             print_anim(f"\n{Colors.YELLOW}Start a new game? Unsaved progress will be lost. (y/n)")
             confirm = input(f"> {Colors.RESET}").strip().lower()
             if confirm == "y":
@@ -200,11 +236,10 @@ def main_menu(player: Player, rooms):
                 time.sleep(1.5)
 
         # ── Quit ──────────────────────────────────────────────────────────────
-        elif choice == "7":
-            print_anim(f"{Colors.YELLOW}\nUnsaved progress will be lost, are you sure? (y/n)")
-
-            if input(f"> {Colors.RESET}").strip() == 'y':
-                print_anim(f"\n{Colors.GREEN}Thanks for playing! Goodbye.\n")
+        elif choice == "8":
+            print_anim(f"{Colors.YELLOW}\nUnsaved progress will be lost, are you sure? (y/n)\n> {Colors.RESET}")
+            if input().strip() == 'y':
+                print_anim(f"\n{Colors.GREEN}Thanks for playing! Goodbye.\n{Colors.RESET}")
                 break
             else:
                 continue

@@ -1,7 +1,7 @@
 import re
 import time
 from entities import Player, Enemy
-from engine import Colors, clear_screen, display_stats
+from engine import Colors, clear_screen, display_stats, print_anim
 from item_manager import get_item, apply_item
 
 
@@ -36,11 +36,11 @@ def combat_loop(player: Player, enemy: Enemy) -> bool:
     """
     clear_screen()
     display_stats(player)
-    print(f"\n--- COMBAT INITIATED: {player.name} vs {enemy.name} ---")
+    print_anim(f"\n--- COMBAT INITIATED: {player.name} vs {enemy.name} ---")
 
     while player.is_alive() and enemy.is_alive():
-        print(f"\n{player.name} HP: {player.health}/{player.max_health}")
-        print(f"{enemy.name} HP: {enemy.health}/{enemy.max_health}")
+        print_anim(f"\n{player.name} HP: {player.health}/{player.max_health}")
+        print_anim(f"{enemy.name} HP: {enemy.health}/{enemy.max_health}")
 
         # Only show items that can actually be used in combat (dict comprehension).
         combat_items = {
@@ -49,16 +49,17 @@ def combat_loop(player: Player, enemy: Enemy) -> bool:
         }
         sorted_combat_items = sorted(combat_items.items(), key=lambda x: x[0])
 
-        print("\nActions:")
-        print(f"  [1] Attack {enemy.name}")
+        print_anim("\nActions:")
+        print_anim(f"  [1] Attack {enemy.name}")
 
         # Dynamically build a numbered action map for your items
         action_map = {1: "attack"}
         for idx, (name, qty) in enumerate(sorted_combat_items, 2):
-            print(f"  [{idx}] Use {name} (x{qty})")
+            print_anim(f"  [{idx}] Use {name} (x{qty})")
             action_map[idx] = name
 
-        raw_command = input("\nWhat will you do? > ").strip()
+        print_anim("\nWhat will you do?\n> ")
+        raw_command = input().strip()
 
         # The Shortcut Interceptor: Translates numbers to Regex strings
         if raw_command.isdigit() and int(raw_command) in action_map:
@@ -76,7 +77,7 @@ def combat_loop(player: Player, enemy: Enemy) -> bool:
 
             if action == "attack":
                 clear_screen()
-                print(f"\nYou attack the {enemy.name} for {player.attack_power} damage!")
+                print_anim(f"\nYou attack the {enemy.name} for {player.attack_power} damage!")
                 enemy.take_damage(player.attack_power)
 
             elif action == "use":
@@ -88,26 +89,26 @@ def combat_loop(player: Player, enemy: Enemy) -> bool:
                     None,
                 )
                 if matched_name is None:
-                    print(f"\n{Colors.RED}You don't have '{target}'.{Colors.RESET}")
+                    print_anim(f"\n{Colors.RED}You don't have '{target}'.{Colors.RESET}")
                     time.sleep(1.5)
                     continue
 
                 success, msg = apply_item(player, matched_name, "combat", enemy)
                 color = Colors.GREEN if success else Colors.RED
-                print(f"\n{color}{msg}{Colors.RESET}")
+                print_anim(f"\n{color}{msg}{Colors.RESET}")
                 if not success:
                     time.sleep(1.5)
                     continue  # Failed uses don't trigger an enemy counter-attack
 
         except InvalidCombatActionError as e:
-            print(f"\n{Colors.RED}[Error] {e}{Colors.RESET}")
+            print_anim(f"\n{Colors.RED}[Error] {e}{Colors.RESET}")
             time.sleep(1.5)
             continue
 
         # Enemy counter-attack (only after a valid player action)
         if enemy.is_alive():
             time.sleep(1)
-            print(f"\nThe {enemy.name} attacks you for {enemy.attack_power} damage!")
+            print_anim(f"\nThe {enemy.name} attacks you for {enemy.attack_power} damage!")
             player.take_damage(enemy.attack_power)
 
     # ── Combat end ────────────────────────────────────────────────────────────
@@ -116,11 +117,11 @@ def combat_loop(player: Player, enemy: Enemy) -> bool:
     if player.is_alive():
         clear_screen()
         player.xp += enemy.xp_reward
-        print(f"\n*** You defeated the {enemy.name}! You gained {enemy.xp_reward} XP. ***")
+        print_anim(f"\n*** You defeated the {enemy.name}! You gained {enemy.xp_reward} XP. ***")
         time.sleep(1.5)
         return True
     else:
         clear_screen()
-        print("\n*** You have been defeated... ***")
+        print_anim("\n*** You have been defeated... ***")
         time.sleep(1.5)
         return False
